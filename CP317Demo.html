@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SleepWell - Your Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-color: #f0f4f8;
+            --card-bg-color: #ffffff;
+            --text-color: #333;
+            --text-secondary-color: #667;
+            --primary-blue: #3498db;
+            --light-blue: #aed6f1;
+            --dark-blue: #2c3e50;
+            --green-accent: #2ecc71;
+            --red-accent: #e74c3c;
+            --font-family: 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .header {
+            grid-column: 1 / -1;
+            text-align: left;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .header h1 {
+            color: var(--dark-blue);
+            margin: 0;
+            font-size: 28px;
+        }
+        
+        .header p {
+            color: var(--text-secondary-color);
+            margin-top: 5px;
+        }
+
+        .card {
+            background-color: var(--card-bg-color);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s ease;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--dark-blue);
+            margin-bottom: 20px;
+        }
+
+        .main-score {
+            grid-column: 1 / -1;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .sleep-score-display {
+            text-align: center;
+        }
+        
+        .sleep-score-display .score {
+            font-size: 64px;
+            font-weight: bold;
+            color: var(--primary-blue);
+            line-height: 1;
+        }
+
+        .sleep-score-display .trend {
+            font-size: 16px;
+            color: var(--green-accent);
+        }
+        
+        .sleep-score-display .trend.down {
+            color: var(--red-accent);
+        }
+
+        .key-metrics {
+            display: flex;
+            gap: 30px;
+            flex-grow: 1;
+            justify-content: space-around;
+        }
+
+        .metric {
+            text-align: center;
+        }
+        
+        .metric .value {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--dark-blue);
+        }
+
+        .metric .label {
+            font-size: 14px;
+            color: var(--text-secondary-color);
+        }
+        
+        .view-controls {
+            grid-column: 1 / -1;
+            text-align: right;
+        }
+        
+        .view-controls button {
+            background-color: var(--card-bg-color);
+            border: 1px solid #ddd;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--text-secondary-color);
+            transition: all 0.2s ease;
+        }
+        
+        .view-controls button.active {
+            background-color: var(--primary-blue);
+            color: white;
+            border-color: var(--primary-blue);
+        }
+
+        .insights {
+            grid-column: span 2;
+        }
+
+        .insight-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .insight-list li {
+            background-color: var(--bg-color);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            font-size: 15px;
+            color: var(--dark-blue);
+            font-weight: 500;
+            border-left: 4px solid var(--primary-blue);
+        }
+        
+        /* New Styles for Form and Wind-down */
+        .manual-input-form .form-group {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 15px;
+        }
+        
+        .manual-input-form label {
+            margin-bottom: 5px;
+            font-size: 14px;
+            color: var(--text-secondary-color);
+        }
+        
+        .manual-input-form input {
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            font-size: 16px;
+        }
+        
+        .manual-input-form button {
+            background-color: var(--primary-blue);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background-color 0.2s ease;
+        }
+        
+        .manual-input-form button:hover {
+            background-color: var(--dark-blue);
+        }
+
+        .wind-down-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .wind-down-list li {
+            display: flex;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--dark-blue);
+        }
+        
+        .wind-down-list li:last-child {
+            border-bottom: none;
+        }
+
+        .wind-down-list li::before {
+            content: '✓';
+            color: var(--green-accent);
+            font-size: 20px;
+            margin-right: 15px;
+        }
+        
+        .status-message {
+            text-align: center;
+            padding: 10px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            grid-column: 1 / -1;
+            display: none; /* Hidden by default */
+        }
+        
+        .status-message.success {
+            background-color: var(--green-accent);
+        }
+
+        @media (max-width: 900px) {
+            .insights {
+                grid-column: 1 / -1;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            .main-score {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+            }
+            .key-metrics {
+                width: 100%;
+                justify-content: space-around;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header class="header">
+            <h1>Your Sleep Dashboard</h1>
+            <p id="date-range">Here's your sleep summary.</p>
+        </header>
+        
+        <div id="status-message" class="status-message"></div>
+
+        <div class="card main-score">
+            <div class="sleep-score-display">
+                <div class="score" id="main-sleep-score">--</div>
+                <div class="trend" id="score-trend">▲ Improving</div>
+                <div class="label">Average Sleep Score</div>
+            </div>
+            <div class="key-metrics">
+                <div class="metric">
+                    <div class="value" id="avg-duration">--h --m</div>
+                    <div class="label">Avg. Duration</div>
+                </div>
+                <div class="metric">
+                    <div class="value" id="avg-quality">--%</div>
+                    <div class="label">Avg. Quality (Deep+REM)</div>
+                </div>
+                <div class="metric">
+                    <div class="value" id="avg-steps">--,---</div>
+                    <div class="label">Avg. Steps</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="view-controls">
+            <button id="btn-weekly" class="active">Weekly</button>
+            <button id="btn-monthly">Monthly</button>
+        </div>
+
+        <div class="card" style="grid-column: 1 / -1;">
+            <div class="card-title">Sleep Score & Duration Trends</div>
+            <canvas id="sleepTrendChart"></canvas>
+        </div>
+        
+        <div class="card insights">
+            <div class="card-title">AI-Powered Insights</div>
+            <ul class="insight-list" id="insight-list">
+                <li>Loading insights...</li>
+            </ul>
+        </div>
+        
+        <div class="card">
+            <div class="card-title">Your Personalized Wind-Down</div>
+            <ul class="wind-down-list" id="wind-down-list">
+                <li>Loading recommendations...</li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Log Today's Data</div>
+            <form id="manual-input-form" class="manual-input-form">
+                <div class="form-group">
+                    <label for="sleep-duration">Sleep Duration (hours)</label>
+                    <input type="number" id="sleep-duration" step="0.1" required placeholder="e.g., 7.5">
+                </div>
+                <div class="form-group">
+                    <label for="steps">Steps Taken</label>
+                    <input type="number" id="steps" required placeholder="e.g., 8500">
+                </div>
+                <div class="form-group">
+                    <label for="screen-time">Screen Time Before Bed (mins)</label>
+                    <input type="number" id="screen-time" required placeholder="e.g., 45">
+                </div>
+                <button type="submit">Add Entry</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // --- DATA GENERATION (Simulates smartwatch data) ---
+        function generateSampleData(numDays) {
+            const data = [];
+            const today = new Date();
+            for (let i = 0; i < numDays; i++) {
+                const date = new Date();
+                date.setDate(today.getDate() - i);
+                
+                let steps = 6000 + Math.random() * 5000;
+                let screenTimeMins = 30 + Math.random() * 90;
+                let sleepDurationHours = 7 + Math.random() * 2 - 1;
+
+                if (steps > 9000) sleepDurationHours += 0.5;
+                if (screenTimeMins > 75) sleepDurationHours -= 0.75;
+                
+                sleepDurationHours = Math.max(5, Math.min(9, sleepDurationHours));
+                
+                const deepSleepPct = 15 + Math.random() * 10 - (screenTimeMins / 20);
+                const remSleepPct = 20 + Math.random() * 5;
+                
+                data.push({
+                    date: date.toISOString().split('T')[0],
+                    sleepDuration: sleepDurationHours,
+                    deepSleepPct: Math.max(5, deepSleepPct),
+                    remSleepPct: Math.max(10, remSleepPct),
+                    steps: Math.round(steps),
+                    screenTimeMins: Math.round(screenTimeMins)
+                });
+            }
+            return data.reverse();
+        }
+
+        // --- CORE ANALYSIS & INSIGHTS ---
+        function calculateSleepScore(day) {
+            const durationScore = Math.min(100, (day.sleepDuration / 8) * 100);
+            const deepSleepScore = Math.min(100, (day.deepSleepPct / 20) * 100);
+            const remScore = Math.min(100, (day.remSleepPct / 25) * 100);
+            return Math.round(durationScore * 0.5 + deepSleepScore * 0.3 + remScore * 0.2);
+        }
+
+        function analyzeData(data) {
+            const insights = new Set();
+            let totalSteps = 0;
+            let totalScreenTime = 0;
+            
+            data.forEach(day => {
+                totalSteps += day.steps;
+                totalScreenTime += day.screenTimeMins;
+            });
+
+            const avgSleepScore = data.reduce((sum, day) => sum + calculateSleepScore(day), 0) / data.length;
+            const highStepSleepScores = data.filter(d => d.steps > 8000).map(calculateSleepScore);
+            const lowScreenTimeSleepScores = data.filter(d => d.screenTimeMins < 45).map(calculateSleepScore);
+
+            if (highStepSleepScores.length > 2) {
+                const avg = highStepSleepScores.reduce((a,b)=>a+b,0) / highStepSleepScores.length;
+                if (avg > avgSleepScore + 5) {
+                    insights.add("You sleep better on days with 8,000+ steps. Keep up the great activity!");
+                }
+            }
+
+            if (lowScreenTimeSleepScores.length > 2) {
+                 const avg = lowScreenTimeSleepScores.reduce((a,b)=>a+b,0) / lowScreenTimeSleepScores.length;
+                 if (avg > avgSleepScore + 5) {
+                    insights.add("Your sleep quality improves when screen time is under 45 minutes before bed.");
+                }
+            }
+
+            const lastDayScore = calculateSleepScore(data[data.length - 1]);
+            const firstDayScore = calculateSleepScore(data[0]);
+            if (lastDayScore > firstDayScore + 5 && data.length > 5) {
+                insights.add("Your sleep consistency is improving. You're building a healthy routine.");
+            } else if (data.length > 5) {
+                 insights.add("Try to maintain a more consistent bedtime this week to improve your sleep score.");
+            }
+            if(insights.size === 0) insights.add("Keep logging your data to uncover more personalized insights!");
+
+            return Array.from(insights);
+        }
+        
+        function generateWindDownRoutine(data) {
+            const routine = new Set();
+            const avgScreenTime = data.reduce((sum, day) => sum + day.screenTimeMins, 0) / data.length;
+            const avgSteps = data.reduce((sum, day) => sum + day.steps, 0) / data.length;
+
+            // Always add a generic good tip
+            routine.add("Dim the lights an hour before bed to signal your body it's time to sleep.");
+
+            if (avgScreenTime > 60) {
+                routine.add("Read a physical book for 20 minutes instead of using your phone.");
+            } else {
+                routine.add("Listen to a calming podcast or instrumental music.");
+            }
+            
+            if (avgSteps > 7000) {
+                 routine.add("Do some light stretching for 10 minutes to relax your active muscles.");
+            }
+            
+            routine.add("Try a 5-minute breathing exercise to calm your mind.");
+
+            return Array.from(routine);
+        }
+
+        // --- CHART & UI RENDERING ---
+        let sleepTrendChart, currentView = 'weekly';
+
+        function renderCharts(data) {
+            const ctxTrend = document.getElementById('sleepTrendChart').getContext('2d');
+            const labels = data.map(d => new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+            const sleepScores = data.map(calculateSleepScore);
+            const sleepDurations = data.map(d => d.sleepDuration);
+            
+            if (sleepTrendChart) sleepTrendChart.destroy();
+            sleepTrendChart = new Chart(ctxTrend, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'Sleep Score', data: sleepScores, borderColor: 'rgba(52, 152, 219, 1)', backgroundColor: 'rgba(52, 152, 219, 0.1)', yAxisID: 'y', fill: true, tension: 0.3 },
+                        { label: 'Sleep Duration (hrs)', data: sleepDurations, borderColor: 'rgba(44, 62, 80, 0.5)', yAxisID: 'y1', borderDash: [5, 5], tension: 0.3 }
+                    ]
+                },
+                options: { responsive: true, scales: { y: { beginAtZero: false, max: 100, position: 'left', title: { display: true, text: 'Sleep Score' } }, y1: { beginAtZero: false, max: 10, position: 'right', title: { display: true, text: 'Hours Slept' }, grid: { drawOnChartArea: false } } } }
+            });
+        }
+        
+        function updateDashboard(period) {
+            currentView = period;
+            const dataToShow = (period === 'weekly') ? fullData.slice(-7) : fullData;
+
+            // Update header
+            document.getElementById('date-range').textContent = `Here's your sleep summary for the last ${dataToShow.length} nights.`;
+
+            // Update key metrics
+            const avgDuration = dataToShow.reduce((s, d) => s + d.sleepDuration, 0) / dataToShow.length;
+            const avgQuality = dataToShow.reduce((s, d) => s + d.deepSleepPct + d.remSleepPct, 0) / dataToShow.length;
+            const avgSteps = dataToShow.reduce((s, d) => s + d.steps, 0) / dataToShow.length;
+            const avgScore = dataToShow.reduce((s, d) => s + calculateSleepScore(d), 0) / dataToShow.length;
+
+            document.getElementById('main-sleep-score').textContent = Math.round(avgScore);
+            document.getElementById('avg-duration').textContent = `${Math.floor(avgDuration)}h ${Math.round((avgDuration % 1) * 60)}m`;
+            document.getElementById('avg-quality').textContent = `${Math.round(avgQuality)}%`;
+            document.getElementById('avg-steps').textContent = avgSteps.toLocaleString('en-US', {maximumFractionDigits:0});
+            
+            // Update score trend indicator
+            const trendEl = document.getElementById('score-trend');
+            const firstHalfAvg = dataToShow.slice(0, Math.floor(dataToShow.length / 2)).reduce((s, d) => s + calculateSleepScore(d), 0) / (dataToShow.length / 2);
+            const secondHalfAvg = dataToShow.slice(Math.ceil(dataToShow.length / 2)).reduce((s, d) => s + calculateSleepScore(d), 0) / (dataToShow.length / 2);
+            if(secondHalfAvg > firstHalfAvg) {
+                trendEl.textContent = '▲ Improving';
+                trendEl.classList.remove('down');
+            } else {
+                trendEl.textContent = '▼ Trending Down';
+                trendEl.classList.add('down');
+            }
+            
+            // Update insights
+            const insights = analyzeData(dataToShow);
+            const insightListEl = document.getElementById('insight-list');
+            insightListEl.innerHTML = '';
+            insights.forEach(insightText => {
+                const li = document.createElement('li');
+                li.textContent = insightText;
+                insightListEl.appendChild(li);
+            });
+            
+            // Update wind-down routine
+            const routine = generateWindDownRoutine(dataToShow);
+            const windDownListEl = document.getElementById('wind-down-list');
+            windDownListEl.innerHTML = '';
+            routine.forEach(task => {
+                const li = document.createElement('li');
+                li.textContent = task;
+                windDownListEl.appendChild(li);
+            });
+
+            renderCharts(dataToShow);
+        }
+        
+        function showStatusMessage(message, type) {
+            const el = document.getElementById('status-message');
+            el.textContent = message;
+            el.className = `status-message ${type}`;
+            el.style.display = 'block';
+            setTimeout(() => { el.style.display = 'none'; }, 3000);
+        }
+
+        // --- INITIALIZATION & EVENT LISTENERS ---
+        const fullData = generateSampleData(30);
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const btnWeekly = document.getElementById('btn-weekly');
+            const btnMonthly = document.getElementById('btn-monthly');
+            const form = document.getElementById('manual-input-form');
+            
+            btnWeekly.addEventListener('click', () => {
+                btnWeekly.classList.add('active');
+                btnMonthly.classList.remove('active');
+                updateDashboard('weekly');
+            });
+            
+            btnMonthly.addEventListener('click', () => {
+                btnMonthly.classList.add('active');
+                btnWeekly.classList.remove('active');
+                updateDashboard('monthly');
+            });
+
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const newEntry = {
+                    date: new Date().toISOString().split('T')[0],
+                    sleepDuration: parseFloat(document.getElementById('sleep-duration').value),
+                    steps: parseInt(document.getElementById('steps').value),
+                    screenTimeMins: parseInt(document.getElementById('screen-time').value),
+                    // Simulate sleep stage data based on inputs
+                    deepSleepPct: Math.max(8, 22 - (parseInt(document.getElementById('screen-time').value) / 10)),
+                    remSleepPct: 22 + (Math.random() * 5)
+                };
+                
+                fullData.push(newEntry);
+                form.reset();
+                showStatusMessage('New data successfully logged!', 'success');
+                updateDashboard(currentView);
+            });
+
+            updateDashboard('weekly');
+        });
+    </script>
+</body>
+</html>
